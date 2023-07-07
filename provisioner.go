@@ -178,23 +178,7 @@ func (p *LocalPathProvisioner) getPathOnNode(node string, requestedPath string) 
 	}
 
 	c := p.config
-	sharedFS, err := p.isSharedFilesystem()
-	if err != nil {
-		return "", err
-	}
-	if sharedFS {
-		// we are ignoring 'node' and returning shared FS path
-		return c.SharedFileSystemPath, nil
-	}
-	// we are working with local FS
-	npMap := c.NodePathMap[node]
-	if npMap == nil {
-		npMap = c.NodePathMap[NodeDefaultNonListedNodes]
-		if npMap == nil {
-			return "", fmt.Errorf("config doesn't contain node %v, and no %v available", node, NodeDefaultNonListedNodes)
-		}
-		logrus.Debugf("config doesn't contain node %v, use %v instead", node, NodeDefaultNonListedNodes)
-	}
+	npMap := c.NodePathMap[NodeDefaultNonListedNodes]
 	paths := npMap.Paths
 	if len(paths) == 0 {
 		return "", fmt.Errorf("no local path available on node %v", node)
@@ -211,6 +195,7 @@ func (p *LocalPathProvisioner) getPathOnNode(node string, requestedPath string) 
 	for path = range paths {
 		break
 	}
+
 	return path, nil
 }
 
@@ -472,7 +457,7 @@ func (p *LocalPathProvisioner) createHelperPod(action ActionType, cmd []string, 
 	}
 	o.Path = filepath.Clean(o.Path)
 	parentDir, volumeDir := filepath.Split(o.Path)
-	hostPathType := v1.HostPathDirectoryOrCreate
+	hostPathType := v1.HostPathDirectory
 	lpvVolumes := []v1.Volume{
 		{
 			Name: helperDataVolName,
